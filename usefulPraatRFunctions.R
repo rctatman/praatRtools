@@ -69,3 +69,66 @@ durationOfInterval <- function(file, numberOfInterval, tierNumber = 1){
   duration = (end - start) * 1000
   return(duration)
 }
+
+# function returns the start and end points of a textgrid interval given a file,
+# the index of an interval and a tier number
+timePointsOfInterval <- function(file, numberOfInterval, tierNumber = 1){
+  argsPoint <- list(tierNumber, numberOfInterval)
+  start <- praat(command = "Get start point...",
+                 arguments = argsPoint,
+                 input=FullPath(file))
+  end <-  praat(command = "Get end point...",
+                arguments = argsPoint,
+                input=FullPath(file))
+  start <- as.numeric(str_extract(start, "[0-9]*.[0-9]*"))
+  end <- as.numeric(str_extract(end, "[0-9]*.[0-9]*"))
+  points <- c(start, end)
+  return(points)
+}
+
+# This function creates an intensity grid given a .wav file and saves it to the
+# working directory
+toIntensity <- function(file, pitchMin = 100, timeStep = 0, subtractMean = "yes"){
+  argsIntensity <- list(
+    pitchMin = pitchMin,
+    timeStep = timeStep, 
+    subtractMean = subtractMean)
+  fileName <- paste(substr(file, 1, nchar(file)-4),".intensity", sep = "")
+  praat(command = "To Intensity...",
+        arguments = argsIntensity,
+        input=FullPath(file),
+        output =FullPath(fileName))
+}
+
+
+# This function takes an intensity grid and two time points and returns the
+# point in that interval with the highest intensity. 
+intensityMaximum <- function(file, timeLow, timeHigh, Interpolation = "Parabolic"){
+  argsIntMax <- list(timeLow, timeHigh, Interpolation)
+  intMax <- praat(command = "Get maximum...",
+                  arguments = argsIntMax,
+                  input = FullPath(file))
+  intMax <- as.numeric(str_extract(end, "[0-9]*.[0-9]*"))
+  return(intMax)
+}
+
+# This function takes an intensity grid and two time points and returns the
+# value of the highest intensity between those two points
+intensityMaximumTime <- function(file, timeLow, timeHigh, Interpolation = "Parabolic"){
+  argsIntMaxTime <- list(timeLow, timeHigh, Interpolation)
+  intMaxTime <- praat(command = "Get time of maximum...",
+                  arguments = argsIntMaxTime,
+                  input = FullPath(file))
+  intMaxTime <- as.numeric(str_extract(start, "[0-9]*.[0-9]*"))
+  return(intMaxTime)	
+}
+
+# junky test code: ignore
+junk <- "junkjunk"
+paste(substr(junk, 0, nchar(junk)-4),"_jaaank.dot", sep="")
+
+times <- timePointsOfInterval(file = textGridList[1], 
+                   numberOfInterval = 2, 
+                   tier = 2) 
+intensityMaximum(file = intensityList[1], times[1], times[2])
+intensityMaximumTime(file = intensityList[1], times[1], times[2])
