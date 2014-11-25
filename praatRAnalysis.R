@@ -1,12 +1,13 @@
 # script to run some basic Praat analysis in R. Requires that you have already 
 # loaded usefulPraatFunctions.R. To use this script, set your working directory 
-# to where you have your TextGrid and Wav files and run the sections of code 
+# to where you have your TextFiles and Wav files and run the sections of code 
 # relevent to you. Also assumes that what you're interested in is in the second
 # tier of your TextGrids.
 # 
 # WARNING: PraatR will crash if any file paths or names have spaces in them
 
-# load PraatR
+# load PraatR. PraatR is NOT in CRAN (as of 11/25/2014) but is avalible for
+# download here: http://www.aaronalbin.com/praatr/index.htm
 library("PraatR")
 
 # set working directory and use a function to make it easier to refer to files
@@ -16,7 +17,7 @@ FullPath = function(FileName){
 
 # get a list of all .wav and .TextGrid files from that directory
 fileList <- list.files()
-# check out those sweet RegExs! So elegent ^^
+# check out those sweet RegExs!
 wavList <- subset(fileList, grepl("(wav)$", fileList))
 textGridList <- subset(fileList, grepl("(TextGrid)$", fileList))
 
@@ -105,14 +106,14 @@ boxplot(memTask1$Duration, memTask2$Duration)
 boxplot(memTask1$Duration, memTask2$Duration, notch = TRUE)
 
 t.test(memTask1$Duration, memTask2$Duration)
-# HOly CARP IT'S SIGNIFICIATN. But they're not really independent and I'm
+# HOly CARP IT'S SIGNIFICIATN. But they're not really independt and I'm
 # interested in more than just which task is at play; I also want to account for
 # individiual variation and weird tokens as well. To do that I'm going to use a
 # linear mixed effects model.
 library(lme4)
 model <- lmer(Duration ~ Task + (1|Person), data = memTask)
 summary(model)
-# Now I'm going to construct another liner mixed effects model that looks
+# Now I'm going to construction another liner mixed effects model that looks
 # excludes task and compare it to the model that incldes it to see if there
 # really a significnat effect of task.
 null.model <- lmer(Duration ~ (1|Person), data = memTask, REML=FALSE)
@@ -159,7 +160,8 @@ col.names = c("File", "Word", "Duration",
               "Max_Intensity", "Time_Max_Intensity")
 measurementsTable <-  read.table(text = "",
                                  colClasses = colClasses,
-                                 col.names = col.names)
+                                 col.names = col.names, 
+                                 stringsAsFactors = F)
 # step through each text grid, and if the label interval isn't empty, find the 
 # duration of the interval, the maximum intensity and the time of the maximum 
 # intensity and append it, then add the file name and the interval label to a
@@ -188,13 +190,34 @@ for (i in 1:length(textGridList)){
                            "Max_Intensity" = Max_Intensity,
                            "Time_Max_Intensity" = Time_Max_Intensity, 
                            stringsAsFactors = F) 
-      durationTable <- rbind(durationTable, newrow)
+      measurementsTable <- rbind(measurementsTable, newrow)
     }
   }
 }
+# save our output to our working directory 
+write.csv(measurementsTable, FullPath("measurementsTable.csv"))
 
+# now we need to clean up that file and make the values numeric as opposed to
+# strings since I forgot to load the new functions first
+toNum <- function(x) as.numeric(str_extract(x, "[0-9]*.[0-9]*"))
+measureNew <- cbind(measurementsTable[,1:3], 
+                         lapply(measurementsTable[,4:5], toNum))
 
+# now to add which task (1st or 2nd mem) each piece of data is from
+measureNew1 <- subset(measureNew, grepl("[1]", measureNew$File))
+newCol <- data.frame("Task" = 1)
+measureNew1 <- cbind(measureNew1, newCol)
 
+# same as above but with the second task
+measureNew2 <- subset(measureNew, grepl("[2]", measureNew$File))
+newCol <- data.frame("Task" = 2)
+measureNew2 <- cbind(measureNew2, newCol)
+
+# create a new table including a column with the task number
+measureNew <- rbind(measureNew1, measureNew2)
+# add a "person" row made from the first three letters of each filename
+person <- data.frame("Person" = tolower(substr(measureNew[,1], 1, 3)))
+measureNew <- cbind(measureNew, person)
 
 # extra useful code bits: ignore
 FullPath(wavList[1:5])
