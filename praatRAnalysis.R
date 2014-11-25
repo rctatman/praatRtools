@@ -20,6 +20,13 @@ fileList <- list.files()
 # check out those sweet RegExs!
 wavList <- subset(fileList, grepl("(wav)$", fileList))
 textGridList <- subset(fileList, grepl("(TextGrid)$", fileList))
+# check to make sure that we have the same number of .wav and .TextGrid files. 
+if(length(wavList)==length(textGridList)){
+  print("Everything's ok.")
+}else{
+  print(c("Something's wrong! Make sure you have a .TextGrid file", 
+          "for every .Wav file in your folder."))
+}
 
 # praat commands -- note that you may need to update Praat if you get error text
 # that begins like this:
@@ -196,9 +203,12 @@ for (i in 1:length(textGridList)){
 }
 # save our output to our working directory 
 write.csv(measurementsTable, FullPath("measurementsTable.csv"))
+# if you've already run this code once, you can run this to read your table
+# measurementsTable <- read.csv("measurementsTable.csv", header = TRUE)
+# measurementsTable <- measurementsTable[,2:6]
 
 # now we need to clean up that file and make the values numeric as opposed to
-# strings since I forgot to load the new functions first
+# strings since I tots mcgoats forgot to load the new functions first
 toNum <- function(x) as.numeric(str_extract(x, "[0-9]*.[0-9]*"))
 measureNew <- cbind(measurementsTable[,1:3], 
                          lapply(measurementsTable[,4:5], toNum))
@@ -218,6 +228,51 @@ measureNew <- rbind(measureNew1, measureNew2)
 # add a "person" row made from the first three letters of each filename
 person <- data.frame("Person" = tolower(substr(measureNew[,1], 1, 3)))
 measureNew <- cbind(measureNew, person)
+
+# create a pitch object for every .wav file in our folder. This is another
+# really hefty one.
+for (i in 1:length(wavList)){
+  toPitch(file = wavList[i])
+}
+# make a list of all the pitch objects we just created and make sure we have
+# enough
+fileList <- list.files()
+pitchList <- subset(fileList, grepl("(.pitch)$", fileList))
+if (length(pitchList) == length(wavList)){
+  print("Everything's fine!")
+} else {
+  print("Something's wrong!")
+}
+
+# now create a pitch tier from each of those pitch objects, since we can't
+# measure pitch given a time point directly from the pitch oject itself
+for (i in 1:length(pitchList)){
+  toPitchTier(file = pitchList[i])
+}
+# make sure everything went according to plan and make a list of all of the
+# pitch tiers we have
+fileList <- list.files()
+pitchTierList <- subset(fileList, grepl("(.pitchTier)$", fileList))
+if (length(pitchTierList) == length(pitchList)){
+  print("Everything's fine!")
+} else {
+  print("Something's wrong!")
+}
+
+# Now we can use our table that includes all the max intensity time points to
+# get the pitch at each of those time points. This one is also less hefty. 
+pitches <- NULL
+for(i in 1:dim(measureNew)[1]){
+  newVal <- pitchFromPitchTier(paste(gsub(".TextGrid", '' , measureNew$File[i]), 
+                           ".pitchTier", sep = "") , measureNew$Time_Max_Intensity[i])
+  pitches <- c(pitches, newVal)
+}
+# now we can bind that list of values as a column to our table
+pitches <- as.numeric(str_extract(pitches, "[0-9]*.[0-9]*"))
+measureNew <- cbind(measureNew, pitches, stringsAsFactors = FALSE, deparse.level = 1)
+# and save this out
+write.csv(measureNew, "measureTableWithPitch.csv")
+
 
 # extra useful code bits: ignore
 FullPath(wavList[1:5])
