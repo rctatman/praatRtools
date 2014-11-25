@@ -86,7 +86,7 @@ timePointsOfInterval <- function(file, numberOfInterval, tierNumber = 1){
   return(points)
 }
 
-# This function creates an intensity grid given a .wav file and saves it to the
+# This funciton creates an intensity object given a .wav file and saves it to the
 # working directory
 toIntensity <- function(file, pitchMin = 100, timeStep = 0, subtractMean = "yes"){
   argsIntensity <- list(
@@ -119,16 +119,77 @@ intensityMaximumTime <- function(file, timeLow, timeHigh, Interpolation = "Parab
   intMaxTime <- praat(command = "Get time of maximum...",
                   arguments = argsIntMaxTime,
                   input = FullPath(file))
-  intMaxTime <- as.numeric(str_extract(start, "[0-9]*.[0-9]*"))
+  intMaxTime <- as.numeric(str_extract(intMaxTime, "[0-9]*.[0-9]*"))
   return(intMaxTime)	
 }
 
+# This function creates a pitch object given a .wav file and saves it to the
+# working directory
+toPitch <- function(file, timeStep = 0, pitchMin = 75, pitchMax = 600){
+  argsPitch <- list(timeStep,pitchMin,pitchMax)
+  fileName <- paste(substr(file, 1, nchar(file)-4),".pitch", sep = "")
+  praat(command = "To Pitch...",
+        arguments = argsPitch,
+        input=FullPath(file),
+        output =FullPath(fileName))
+}
+
+# This function is supposed to extract pitch from a pitch object at a given 
+# point: at the moment it appears to be broken. It returns "undefinined" 
+# regardless of whether there is a pitch track present at the point where it is 
+# called or not. I've circumvented this by creating pitchtiers from the pitch 
+# objects and then using them but it seems a little inefficient.  
+pitchAtMaxIntensity <- function(file, time){
+  argsPitchMax <- list(time, "Hertz", "Linear")
+  pitch <-  praat(command = "Get value at time...",
+        arguments = argsPitchMax,
+        input=FullPath(file))
+  pitch <- as.numeric(str_extract(pitch, "[0-9]*.[0-9]*"))
+  return(pitch)
+}
+
+# creates a pitchtier given a pitch object
+toPitchTier <- function(file){
+  fileName <- paste(substr(file, 1, nchar(file)-6),".pitchTier", sep = "")
+  praat(command = "Down to PitchTier",
+        input=FullPath(file),
+        output =FullPath(fileName))
+}
+
+# gives the pitch value at a specific time point given both a pitch ovbject and
+# a time value
+pitchFromPitchTier <- function(file, time){
+  argsPitchTier <- list(time)
+  pitch <-  praat(command = "Get value at time...",
+                  arguments = argsPitchTier,
+                  input=FullPath(file))
+  pitch <- as.numeric(str_extract(pitch, "[0-9]*.[0-9]*"))
+  return(pitch)
+}
+
+
 # junky test code: ignore
+
 junk <- "junkjunk"
 paste(substr(junk, 0, nchar(junk)-4),"_jaaank.dot", sep="")
 
+pitchObj <- toPitch(wavList[1])
 times <- timePointsOfInterval(file = textGridList[1], 
                    numberOfInterval = 2, 
                    tier = 2) 
 intensityMaximum(file = intensityList[1], times[1], times[2])
 intensityMaximumTime(file = intensityList[1], times[1], times[2])
+
+time = measureNew$Time_Max_Intensity[1]/1000
+pitchAtMaxIntensity(pitchList[1], time = 69.442904)
+
+pitchTier(pitchList[1])
+
+file = pitchList[1]
+time =69.442904 
+  argsPitchMax <- list(time, "Hertz", "Linear")
+  pitch <-  praat(command = "Get value at time...",
+                  arguments = argsPitchMax,
+                  input=FullPath(file))
+
+pitchFromPitchTier(file = "007_mem1.pitchTier", time = measureNew$Time_Max_Intensity[1])
