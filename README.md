@@ -6,7 +6,6 @@ A very rough bit of R code that allows for acoustic analysis using Praat from R.
 This is still very much a work in progress but I will be actively updating it as development continues. 
 
 To do: 
-- extract formants at point of max intensity
 - create formant table in the right format for Bayesian Vowel Modelling (http://pages.iu.edu/~wrankine/bvm/untitled/normalization/interactive-software-progra.html)
 - add option to only look at text grid intervals with specific labels (i.e. vowels only)
 - create example script with data 
