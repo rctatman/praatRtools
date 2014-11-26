@@ -201,6 +201,22 @@ for (i in 1:length(textGridList)){
     }
   }
 }
+
+#this bit is the corrected time of max intensity, since I missed a typo in the
+#fucntion first time round
+listTimeMaxCorr <- NULL
+for (i in 1:length(textGridList)){
+  labelList <- labelOfIntervals(textGridList[i],numInt[i], tier = 2 )
+  for (j in 1:length(labelList)){
+    if (labelList[j] != "" ){
+      times <- timePointsOfInterval(file = textGridList[i], 
+                                  numberOfInterval = j, 
+                                  tier = 2) 
+      Time_Max_Intensity <- intensityMaximumTime(file = intensityList[i], times[1], times[2])
+      listTimeMaxCorr <- c(listTimeMaxCorr, Time_Max_Intensity)
+    }
+  }
+}
 # save our output to our working directory 
 write.csv(measurementsTable, FullPath("measurementsTable.csv"))
 # if you've already run this code once, you can run this to read your table
@@ -272,6 +288,56 @@ pitches <- as.numeric(str_extract(pitches, "[0-9]*.[0-9]*"))
 measureNew <- cbind(measureNew, pitches, stringsAsFactors = FALSE, deparse.level = 1)
 # and save this out
 write.csv(measureNew, "measureTableWithPitch.csv")
+
+# create a formant object for each of the wav files in our folder. This will
+# take a while so I've divided it into thirds.
+# first third of your files
+for (i in 2:floor(length(wavList)/3)){
+  toFormant(file = wavList[i])
+}
+# second third of your files
+for (i in (floor(length(wavList)/3) + 1):(length(wavList) - floor(length(wavList)/3))){
+  toFormant(file = wavList[i])
+}
+# the rest of your files
+for (i in (length(wavList) - floor(length(wavList)/3) + 1):length(wavList)){
+  toFormant(file = wavList[i])
+}
+# check to make sure we got everything
+fileList <- list.files()
+formantList <- subset(fileList, grepl("(.formant)$", fileList))
+if (length(formantList) == length(wavList)){
+  print("Everything's fine!")
+} else {
+  print("Something's wrong!")
+}
+# this bit of script steps through our file and finds the F1 and F2 for each
+# point of maximum apmplitude.
+#
+# This one is a BEAST. It will take bascially forever. 
+colClasses = c("character", "character")
+col.names = c("F1", "F2")
+formantTable <-  read.table(text = "",
+                            colClasses = colClasses,
+                            col.names = col.names,
+                            stringsAsFactors = F)
+for(i in 1:dim(measureNew)[1]){
+  fileName <- paste(gsub(".TextGrid", '' , measureNew$File[i]), ".formant", sep = "")
+  f1 <- formantAtTime(file = fileName,
+                      formantNumber = 1,
+                      time = measureNew$Time_Max_Intensity[i])
+  f2 <- formantAtTime(file = fileName,
+                      formantNumber = 2,
+                      time = measureNew$Time_Max_Intensity[i])
+  newrow <- data.frame("F1" = f1,
+                       "F2" = f2,
+                       stringsAsFactors = F) 
+  formantTable <- rbind(formantTable, newrow)
+}
+measureNew <- cbind(measureNew, formantTable, stringsAsFactors = FALSE, deparse.level = 1)
+# and save this out
+write.csv(measureNew, "measureTableWithPitchAndFormants.csv")
+
 
 
 # extra useful code bits: ignore
