@@ -167,8 +167,44 @@ pitchFromPitchTier <- function(file, time){
   return(pitch)
 }
 
+# this function creates a formant object. Taken from Aaron Albin's example on
+# the PraatR page, here: http://www.aaronalbin.com/praatr/ExampleApplication.r
+toFormant <- function(file){
+  fileName <- paste(substr(file, 1, nchar(file)-4),".formant", sep = "")
+  FormantArguments = list( 0.001, # Time step (s)
+                           5,     # Max. number of formants
+                           5500,  # Maximum formant (Hz)
+                           0.025, # Window length (s)
+                           50    )# Pre-emphasis from (Hz)
+  praat( "To Formant (burg)...",
+       arguments = FormantArguments,
+       input = FullPath(file),
+       output = FullPath(fileName))
+}
+
+# this function outputs a formant given a .formant object, formant number (1 = 
+# f1, 2 = f2, etc.) and time of the measturement. You can also specify units 
+# (Hertz or Bark, Hertz by default) and interpolation method (linear by 
+# default). More disucssion of this Praat function here: 
+# http://www.fon.hum.uva.nl/praat/manual/Formant__Get_value_at_time___.html
+# 
+# Please note that there may be pretty severe pitch tracking errors--make sure
+# you check your measurements!
+formantAtTime <- function(file, formantNumber, time, 
+                          unit = "Hertz", interpolation = "linear"){
+ formantArgs <- list(formantNumber, time, unit, interpolation)
+ formant <- praat(command = "Get value at time...",
+                  arguments = formantArgs,
+                  input = FullPath(file))
+ formant <- as.numeric(str_extract(formant, "[0-9]*.[0-9]*"))
+ return(formant)
+}
+
 
 # junky test code: ignore
+formantAtTime(file = formantList[1], 
+              formantNumber = 2,  
+              time = measureNew$Time_Max_Intensity[3])
 
 junk <- "junkjunk"
 paste(substr(junk, 0, nchar(junk)-4),"_jaaank.dot", sep="")
@@ -193,3 +229,5 @@ time =69.442904
                   input=FullPath(file))
 
 pitchFromPitchTier(file = "007_mem1.pitchTier", time = measureNew$Time_Max_Intensity[1])
+
+toFormant(wavList[1])
