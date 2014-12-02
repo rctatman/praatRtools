@@ -39,7 +39,6 @@ findF2 = TRUE
 # interval is on that list. Case sensative
 tablesOfLabelsOfInterest = read.csv(file.choose(), header = FALSE)
 labelsOfInterest = tablesOfLabelsOfInterest[[1]]
-
 ## Load required packages
 #
 # load PraatR. PraatR is NOT in CRAN (as of 11/25/2014) but is avalible for
@@ -48,6 +47,12 @@ library("PraatR")
 library(stringr)
 
 ## Set and check our working directory 
+#
+# set working directory and use a function to make it easier to refer to files
+# for later: 
+setwd("/Users/labuser/Documents/labusers/Rachael/passageTask/")
+setwd("/Users/labuser/Documents/labusers/Rachael/wordTask/")
+# start with Convo
 setwd("/Users/labuser/Documents/labusers/Rachael/convoTask/")
 FullPath = function(FileName){
   return( paste(getwd(), FileName, sep="/")) }
@@ -88,8 +93,8 @@ for (i in 1:length(textGridList)){
   # look thorugh each label and if it's not blank find the duration and then
   # add it to our variable
   for (j in 1:length(labelList)){
-      label = labelList[j]
-      if (match(label, labelsOfInterest, nomatch = 0)){
+    label = labelList[j]
+    if (match(label, labelsOfInterest, nomatch = 0)){
       newrow <- data.frame("File" = textGridList[i],
                            "Word" = labelList[j],
                            stringsAsFactors = F) 
@@ -97,6 +102,9 @@ for (i in 1:length(textGridList)){
     }
   }
 }
+
+# save our file in case we need it later
+write.csv(measurementTable, "mesasurementTable.csv", header = TRUE)
 
 ## Find duration 
 #
@@ -111,8 +119,7 @@ if (findDuration == TRUE){
     # look thorugh each label and if it's not blank find the duration and then
     # add it to our variable
     for (j in 1:length(labelList)){
-      label = labelList[j]
-      if (match(label, labelsOfInterest, nomatch = 0)){
+      if (match(labelList[j], labelsOfInterest, nomatch = 0)){
         newVal <- durationOfInterval(file = textGridList[i], 
                                      numberOfInterval = j, 
                                      tier = 1)
@@ -123,7 +130,7 @@ if (findDuration == TRUE){
   # add Duration to our measurement table and then save it to disk
   measurementTable <- cbind(measurementTable, Duration, 
                             stringsAsFactors = FALSE, deparse.level = 1)
-  write.csv(measurementTable, "measurementTable.csv")
+  write.csv(measurementTable, "measurementTableDur.csv")
 }
 
 
@@ -137,17 +144,21 @@ if ((findIntensity + findPitch + findF1 + findF2) > 0){
   for (i in 1:length(wavList)){
     toIntensity(file = wavList[i])
   }
+  
+  # create a list of all of our intenisty files for easy reference 
   fileList <- list.files()
   intensityList <- subset(fileList, grepl("(.intensity)$", fileList))
+  
+  # create a place to store our points of max intensity 
+  timeMaxInt <- NULL
+  
   # find the point of max intensity and add it to our file
   for (i in 1:length(textGridList)){
-    # create a place to store our points of max intensity 
-    timeMaxInt <- NULL
-    # list all the interval labels (including blanks) in the text grid
+      # list all the interval labels (including blanks) in the text grid
     labelList <- labelOfIntervals(textGridList[i],numInt[i], tier = 1 )
     # look through each label and if it's not blank find the point of max intensity
     for (j in 1:length(labelList)){
-      if (match(labelList[j], labelsOfInterest)){
+      if (match(labelList[j], labelsOfInterest, nomatch = 0)){
         times <- timePointsOfInterval(file = textGridList[i], 
                                       numberOfInterval = j, 
                                       tier = 1) 
@@ -160,21 +171,21 @@ if ((findIntensity + findPitch + findF1 + findF2) > 0){
   # add our measurements to the table and save the file
   measurementTable <- cbind(measurementTable, timeMaxInt, 
                             stringsAsFactors = FALSE, deparse.level = 1)
-  write.csv(measurementTable, "measurementTable.csv")
+  write.csv(measurementTable, "measurementTableIntTime.csv")
 }
 
 ## Find max intensity 
 #
 # now find the max intensity (if needed) and add it to our table 
 if (findIntensity = TRUE){
+  # create a place to store our points of max intensity 
+  Intensity <- NULL
   for (i in 1:length(textGridList)){
-    # create a place to store our points of max intensity 
-    Intensity <- NULL
     # list all the interval labels (including blanks) in the text grid
     labelList <- labelOfIntervals(textGridList[i],numInt[i], tier = 1 )
     # look through each label and if it's not blank find the point of max intensity
     for (j in 1:length(labelList)){
-      if (match(labelList[j], labelsOfInterest)){
+      if (match(labelList[j], labelsOfInterest, nomatch = 0)){
         times <- timePointsOfInterval(file = textGridList[i], 
                                       numberOfInterval = j, 
                                       tier = 1) 
@@ -186,7 +197,7 @@ if (findIntensity = TRUE){
   # add our intensity measurements to the table and save the file
   measurementTable <- cbind(measurementTable, Intensity, 
                             stringsAsFactors = FALSE, deparse.level = 1)
-  write.csv(measurementTable, "measurementTable.csv")
+  write.csv(measurementTable, "measurementTableInt.csv")
 }
 
 ## Find max pitch 
@@ -216,7 +227,7 @@ if (findPitch == TRUE){
   measurementTable <- cbind(measurementTable, Pitch, 
                             stringsAsFactors = FALSE, deparse.level = 1)
   # and save it out
-  write.csv(measurementTable, "measurementTable.csv")
+  write.csv(measurementTable, "measurementTablePitch.csv")
 }
 
 # Create formant objects
@@ -247,7 +258,7 @@ if (findF1 == TRUE){
   measurementTable <- cbind(measurementTable, F1, 
                             stringsAsFactors = FALSE, deparse.level = 1)
   # and save it out
-  write.csv(measurementTable, "measurementTable.csv")
+  write.csv(measurementTable, "measurementTableF1.csv")
 }
 
 ## Find F2
@@ -267,5 +278,5 @@ if (findF2 == TRUE){
   measurementTable <- cbind(measurementTable, F2, 
                             stringsAsFactors = FALSE, deparse.level = 1)
   # and save it out
-  write.csv(measurementTable, "measurementTable.csv")
+  write.csv(measurementTable, "measurementTableF2.csv")
 }
