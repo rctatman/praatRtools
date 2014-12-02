@@ -28,8 +28,8 @@ numberOfIntervals <- function(files,tier = 1){
   # loops thorugh every textgrid in your file list nand
   for (i in 1:length(files)) {
     j <- praat( command = "Get number of intervals...",
-           arguments = tierArg,
-           input=FullPath(files[i]))
+                arguments = tierArg,
+                input=FullPath(files[i]))
     numInt = c(numInt, j)
   }
   return(numInt)
@@ -42,7 +42,7 @@ numberOfIntervals <- function(files,tier = 1){
 # function) and the tier of interest (1 by default).
 labelOfIntervals <- function(file, numberOfIntervals, tierNumber = 1){
   labelList <- NULL
-   for (i in 1:numberOfIntervals){
+  for (i in 1:numberOfIntervals){
     intervalNumber <- i
     labelArgs <- list(tierNumber, intervalNumber)
     label<- praat(command = "Get label of interval...",
@@ -119,7 +119,7 @@ intensityMaximum <- function(file, timeLow, timeHigh, Interpolation = "Parabolic
   intMax <- praat(command = "Get maximum...",
                   arguments = argsIntMax,
                   input = FullPath(file))
-  intMax <- as.numeric(str_extract(end, "[0-9]*.[0-9]*"))
+  intMax <- as.numeric(str_extract(intMax, "[0-9]*.[0-9]*"))
   return(intMax)
 }
 
@@ -130,10 +130,10 @@ intensityMaximum <- function(file, timeLow, timeHigh, Interpolation = "Parabolic
 intensityMaximumTime <- function(file, timeLow, timeHigh, Interpolation = "Parabolic"){
   argsIntMaxTime <- list(timeLow, timeHigh, Interpolation)
   intMaxTime <- praat(command = "Get time of maximum...",
-                  arguments = argsIntMaxTime,
-                  input = FullPath(file))
+                      arguments = argsIntMaxTime,
+                      input = FullPath(file))
   intMaxTime <- as.numeric(str_extract(intMaxTime, "[0-9]*.[0-9]*"))
-  return(intMaxTime)	
+  return(intMaxTime)  
 }
 
 ## To Pitch Object
@@ -159,8 +159,8 @@ toPitch <- function(file, timeStep = 0, pitchMin = 75, pitchMax = 600){
 pitchAtMaxIntensity <- function(file, time){
   argsPitchMax <- list(time, "Hertz", "Linear")
   pitch <-  praat(command = "Get value at time...",
-        arguments = argsPitchMax,
-        input=FullPath(file))
+                  arguments = argsPitchMax,
+                  input=FullPath(file))
   pitch <- as.numeric(str_extract(pitch, "[0-9]*.[0-9]*"))
   return(pitch)
 }
@@ -200,9 +200,9 @@ toFormant <- function(file){
                            0.025, # Window length (s)
                            50    )# Pre-emphasis from (Hz)
   praat( "To Formant (burg)...",
-       arguments = FormantArguments,
-       input = FullPath(file),
-       output = FullPath(fileName))
+         arguments = FormantArguments,
+         input = FullPath(file),
+         output = FullPath(fileName))
 }
 
 ## Formant from Formant Object 
@@ -217,10 +217,10 @@ toFormant <- function(file){
 # you check your measurements!
 formantAtTime <- function(file, formantNumber, time, 
                           unit = "Hertz", interpolation = "linear"){
- formantArgs <- list(formantNumber, time, unit, interpolation)
- formant <- praat(command = "Get value at time...",
-                  arguments = formantArgs,
-                  input = FullPath(file))
- formant <- as.numeric(str_extract(formant, "[0-9]*.[0-9]*"))
- return(formant)
+  formantArgs <- list(formantNumber, time, unit, interpolation)
+  formant <- praat(command = "Get value at time...",
+                   arguments = formantArgs,
+                   input = FullPath(file))
+  formant <- as.numeric(str_extract(formant, "[0-9]*.[0-9]*"))
+  return(formant)
 }
