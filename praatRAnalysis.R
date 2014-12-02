@@ -38,7 +38,7 @@ findF2 = TRUE
 # information for only the labelled intervals where the the label of the
 # interval is on that list. Case sensative
 tablesOfLabelsOfInterest = read.csv(file.choose(), header = FALSE)
-labelsOfInterest = tablesOfLabelsOfInterest[,1]
+labelsOfInterest = tablesOfLabelsOfInterest[[1]]
 
 ## Load required packages
 #
@@ -88,7 +88,8 @@ for (i in 1:length(textGridList)){
   # look thorugh each label and if it's not blank find the duration and then
   # add it to our variable
   for (j in 1:length(labelList)){
-    if (match(labelList[j], labelsOfInterest)){
+      label = labelList[j]
+      if (match(label, labelsOfInterest, nomatch = 0)){
       newrow <- data.frame("File" = textGridList[i],
                            "Word" = labelList[j],
                            stringsAsFactors = F) 
@@ -110,7 +111,8 @@ if (findDuration == TRUE){
     # look thorugh each label and if it's not blank find the duration and then
     # add it to our variable
     for (j in 1:length(labelList)){
-      if (match(labelList[j], labelsOfInterest)){
+      label = labelList[j]
+      if (match(label, labelsOfInterest, nomatch = 0)){
         newVal <- durationOfInterval(file = textGridList[i], 
                                      numberOfInterval = j, 
                                      tier = 1)
