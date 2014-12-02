@@ -1,13 +1,16 @@
-#useful functions in PraatR note that you may need to update Praat if you get 
-#error text that begins like this:
+# Useful functions in PraatR note that you may need to update Praat if you get 
+# error text that begins like this:
 #
-#Error: Unknown function «do» in formula. Script line 10 not performed or 
-#completed: « do ( "Read from file...", input$ ) »
+## Error: Unknown function «do» in formula. Script line 10 not performed or 
+## completed: « do ( "Read from file...", input$ ) »
 #
+# Code produced by Rachael Tatman (rctatman@uw.edu) at the University of
+# Washington. Work supported by the National Science Foundation Graduate
+# Research Fellowship Program.
 ##################################################
 
 
-# Number of Intervals
+## Number of Intervals
 # 
 # function that takes a list of textgrids and a tier number and returns a vector
 # of the number of intervals in each. Requires that you are in the same working
@@ -32,6 +35,8 @@ numberOfIntervals <- function(files,tier = 1){
   return(numInt)
 }
 
+# # Labels of intervals
+#
 # a function to get an interval label from a selected Praat Textgrid file.
 # Requires a single file, the nubmer of intervals (can be got using the above
 # function) and the tier of interest (1 by default).
@@ -48,13 +53,14 @@ labelOfIntervals <- function(file, numberOfIntervals, tierNumber = 1){
   return(labelList)
 }
 
+## Duration of Interval 
+#
 # This function takes a file, the index of an interval and a tier number and 
 # returns the duration of that interval in milliseconds
 # 
 # It requries the package stringr; if you haven't installed it, uncomment the
 # next line.
 # install(stringr)
-library(stringr)
 durationOfInterval <- function(file, numberOfInterval, tierNumber = 1){
   argsPoint <- list(tierNumber, numberOfInterval)
   start <- praat(command = "Get start point...",
@@ -70,6 +76,8 @@ durationOfInterval <- function(file, numberOfInterval, tierNumber = 1){
   return(duration)
 }
 
+## Time points of interval 
+#
 # function returns the start and end points of a textgrid interval given a file,
 # the index of an interval and a tier number
 timePointsOfInterval <- function(file, numberOfInterval, tierNumber = 1){
@@ -86,6 +94,8 @@ timePointsOfInterval <- function(file, numberOfInterval, tierNumber = 1){
   return(points)
 }
 
+## To Intensity Object
+#
 # This funciton creates an intensity object given a .wav file and saves it to the
 # working directory
 toIntensity <- function(file, pitchMin = 100, timeStep = 0, subtractMean = "yes"){
@@ -100,7 +110,8 @@ toIntensity <- function(file, pitchMin = 100, timeStep = 0, subtractMean = "yes"
         output =FullPath(fileName))
 }
 
-
+## Intensity Maximum 
+#
 # This function takes an intensity grid and two time points and returns the
 # point in that interval with the highest intensity. 
 intensityMaximum <- function(file, timeLow, timeHigh, Interpolation = "Parabolic"){
@@ -112,6 +123,8 @@ intensityMaximum <- function(file, timeLow, timeHigh, Interpolation = "Parabolic
   return(intMax)
 }
 
+## Time of Maximum Intensity 
+#
 # This function takes an intensity grid and two time points and returns the
 # value of the highest intensity between those two points
 intensityMaximumTime <- function(file, timeLow, timeHigh, Interpolation = "Parabolic"){
@@ -123,6 +136,8 @@ intensityMaximumTime <- function(file, timeLow, timeHigh, Interpolation = "Parab
   return(intMaxTime)	
 }
 
+## To Pitch Object
+#
 # This function creates a pitch object given a .wav file and saves it to the
 # working directory
 toPitch <- function(file, timeStep = 0, pitchMin = 75, pitchMax = 600){
@@ -134,6 +149,8 @@ toPitch <- function(file, timeStep = 0, pitchMin = 75, pitchMax = 600){
         output =FullPath(fileName))
 }
 
+## BROKEN: Pitch at Max Intensity. Use pitchFromPitchTier instead. 
+#
 # This function is supposed to extract pitch from a pitch object at a given 
 # point: at the moment it appears to be broken. It returns "undefinined" 
 # regardless of whether there is a pitch track present at the point where it is 
@@ -148,6 +165,8 @@ pitchAtMaxIntensity <- function(file, time){
   return(pitch)
 }
 
+## To Pitch Tier Object
+#
 # creates a pitchtier given a pitch object
 toPitchTier <- function(file){
   fileName <- paste(substr(file, 1, nchar(file)-6),".pitchTier", sep = "")
@@ -156,7 +175,9 @@ toPitchTier <- function(file){
         output =FullPath(fileName))
 }
 
-# gives the pitch value at a specific time point given both a pitch ovbject and
+## Pitch From Pitch Tier
+#
+# gives the pitch value at a specific time point given both a pitch object and
 # a time value
 pitchFromPitchTier <- function(file, time){
   argsPitchTier <- list(time)
@@ -167,6 +188,8 @@ pitchFromPitchTier <- function(file, time){
   return(pitch)
 }
 
+## To Formant Object
+#
 # this function creates a formant object. Taken from Aaron Albin's example on
 # the PraatR page, here: http://www.aaronalbin.com/praatr/ExampleApplication.r
 toFormant <- function(file){
@@ -182,6 +205,8 @@ toFormant <- function(file){
        output = FullPath(fileName))
 }
 
+## Formant from Formant Object 
+#
 # this function outputs a formant given a .formant object, formant number (1 = 
 # f1, 2 = f2, etc.) and time of the measturement. You can also specify units 
 # (Hertz or Bark, Hertz by default) and interpolation method (linear by 
@@ -199,35 +224,3 @@ formantAtTime <- function(file, formantNumber, time,
  formant <- as.numeric(str_extract(formant, "[0-9]*.[0-9]*"))
  return(formant)
 }
-
-
-# junky test code: ignore
-formantAtTime(file = formantList[1], 
-              formantNumber = 2,  
-              time = measureNew$Time_Max_Intensity[3])
-
-junk <- "junkjunk"
-paste(substr(junk, 0, nchar(junk)-4),"_jaaank.dot", sep="")
-
-pitchObj <- toPitch(wavList[1])
-times <- timePointsOfInterval(file = textGridList[1], 
-                   numberOfInterval = 2, 
-                   tier = 2) 
-intensityMaximum(file = intensityList[1], times[1], times[2])
-intensityMaximumTime(file = intensityList[1], times[1], times[2])
-
-time = measureNew$Time_Max_Intensity[1]/1000
-pitchAtMaxIntensity(pitchList[1], time = 69.442904)
-
-pitchTier(pitchList[1])
-
-file = pitchList[1]
-time =69.442904 
-  argsPitchMax <- list(time, "Hertz", "Linear")
-  pitch <-  praat(command = "Get value at time...",
-                  arguments = argsPitchMax,
-                  input=FullPath(file))
-
-pitchFromPitchTier(file = "007_mem1.pitchTier", time = measureNew$Time_Max_Intensity[1])
-
-toFormant(wavList[1])
