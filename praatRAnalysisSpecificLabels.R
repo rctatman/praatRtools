@@ -39,6 +39,7 @@ findF2 = TRUE
 # interval is on that list. Case sensative
 tablesOfLabelsOfInterest = read.csv(file.choose(), header = FALSE)
 labelsOfInterest = tablesOfLabelsOfInterest[[1]]
+
 ## Load required packages
 #
 # load PraatR. PraatR is NOT in CRAN (as of 11/25/2014) but is avalible for
@@ -104,7 +105,7 @@ for (i in 1:length(textGridList)){
 }
 
 # save our file in case we need it later
-write.csv(measurementTable, "mesasurementTable.csv", header = TRUE)
+write.csv(measurementTable, "mesasurementTable.csv")
 
 ## Find duration 
 #
@@ -177,7 +178,7 @@ if ((findIntensity + findPitch + findF1 + findF2) > 0){
 ## Find max intensity 
 #
 # now find the max intensity (if needed) and add it to our table 
-if (findIntensity = TRUE){
+if (findIntensity == TRUE){
   # create a place to store our points of max intensity 
   Intensity <- NULL
   for (i in 1:length(textGridList)){
@@ -189,7 +190,9 @@ if (findIntensity = TRUE){
         times <- timePointsOfInterval(file = textGridList[i], 
                                       numberOfInterval = j, 
                                       tier = 1) 
-        newVal <- times <- intensityMaximum(file = intensityList[i], times[1], times[2])
+        newVal <- intensityMaximum(file = intensityList[i], 
+                                   timeLow = times[1], 
+                                   timeHigh = times[2])
         Intensity <- c(Intensity, newVal)
       }
     }
@@ -235,7 +238,7 @@ if (findPitch == TRUE){
 # create formant objects if we need them. This particular function takes a
 # really long time
 if (findF1 + findF2 > 0){
-  for (i in 1:length(wavList){
+  for (i in 1:length(wavList)){
     toFormant(file = wavList[i])
   }
 }
