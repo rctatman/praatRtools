@@ -34,6 +34,12 @@ findPitch = TRUE
 findF1 =  TRUE
 findF2 = TRUE
 
+# this lets you load in a .csv of labels that you're interested in and then get
+# information for only the labelled intervals where the the label of the
+# interval is on that list. Case sensative
+tablesOfLabelsOfInterest = read.csv(file.choose(), header = FALSE)
+labelsOfInterest = tablesOfLabelsOfInterest[[1]]
+
 ## Load required packages
 #
 # load PraatR. PraatR is NOT in CRAN (as of 11/25/2014) but is avalible for
@@ -44,7 +50,11 @@ library(stringr)
 ## Set and check our working directory 
 #
 # set working directory and use a function to make it easier to refer to files
-setwd("/home/username/linguisticData/")
+# for later: 
+setwd("/Users/labuser/Documents/labusers/Rachael/convoTask//")
+setwd("/Users/labuser/Documents/labusers/Rachael/wordTask/")
+# start with Convo
+setwd("/Users/labuser/Documents/labusers/Rachael/passageTask/")
 FullPath = function(FileName){
   return( paste(getwd(), FileName, sep="/")) }
 
@@ -68,23 +78,24 @@ if(length(wavList)==length(textGridList)){
 # get number of intervals in the second tier of each textgrid as a vector. (This
 # is the only function in usefulPraatRFunctions that loops thorugh your
 # directory for you)
-numInt <- numberOfIntervals(textGridList, tier = 2)
+numInt <- numberOfIntervals(textGridList, tier = 1)
 
 # Now we create an empty table for our measurements. 
 colClasses = c("character", "character")
 col.names = c("File", "Word")
 measurementTable <- read.table(text = "",
-                            colClasses = colClasses,
-                            col.names = col.names)
+                               colClasses = colClasses,
+                               col.names = col.names)
 # populate that empty table with the labels of all non-empty intervals in a tier
 # we're interested in
 for (i in 1:length(textGridList)){
   # list all the interval labels (including blanks) in the text grid
-  labelList <- labelOfIntervals(textGridList[i],numInt[i], tier = 2 )
+  labelList <- labelOfIntervals(textGridList[i],numInt[i], tier = 1 )
   # look thorugh each label and if it's not blank find the duration and then
   # add it to our variable
   for (j in 1:length(labelList)){
-    if (labelList[j] != "" ){
+    label = labelList[j]
+    if (match(label, labelsOfInterest, nomatch = 0)){
       newrow <- data.frame("File" = textGridList[i],
                            "Word" = labelList[j],
                            stringsAsFactors = F) 
@@ -92,6 +103,9 @@ for (i in 1:length(textGridList)){
     }
   }
 }
+
+# save our file in case we need it later
+write.csv(measurementTable, "mesasurementTable.csv")
 
 ## Find duration 
 #
@@ -102,22 +116,22 @@ if (findDuration == TRUE){
   # loop through each text grid and ilst the duration of all non-blank intervals
   for (i in 1:length(textGridList)){
     # list all the interval labels (including blanks) in the text grid
-    labelList <- labelOfIntervals(textGridList[i],numInt[i], tier = 2 )
+    labelList <- labelOfIntervals(textGridList[i],numInt[i], tier = 1 )
     # look thorugh each label and if it's not blank find the duration and then
     # add it to our variable
     for (j in 1:length(labelList)){
-      if (labelList[j] != "" ){
+      if (match(labelList[j], labelsOfInterest, nomatch = 0)){
         newVal <- durationOfInterval(file = textGridList[i], 
                                      numberOfInterval = j, 
-                                     tier = 2)
-        Duration <- c(duration, newVal)
+                                     tier = 1)
+        Duration <- c(Duration, newVal)
       }
     }
   }
   # add Duration to our measurement table and then save it to disk
   measurementTable <- cbind(measurementTable, Duration, 
                             stringsAsFactors = FALSE, deparse.level = 1)
-  write.csv(measurementTable, "measurementTable.csv")
+  write.csv(measurementTable, "measurementTableDur.csv")
 }
 
 
@@ -131,22 +145,26 @@ if ((findIntensity + findPitch + findF1 + findF2) > 0){
   for (i in 1:length(wavList)){
     toIntensity(file = wavList[i])
   }
+  
+  # create a list of all of our intenisty files for easy reference 
   fileList <- list.files()
   intensityList <- subset(fileList, grepl("(.intensity)$", fileList))
+  
+  # create a place to store our points of max intensity 
+  timeMaxInt <- NULL
+  
   # find the point of max intensity and add it to our file
   for (i in 1:length(textGridList)){
-    # create a place to store our points of max intensity 
-    timeMaxInt <- NULL
-    # list all the interval labels (including blanks) in the text grid
-    labelList <- labelOfIntervals(textGridList[i],numInt[i], tier = 2 )
+      # list all the interval labels (including blanks) in the text grid
+    labelList <- labelOfIntervals(textGridList[i],numInt[i], tier = 1 )
     # look through each label and if it's not blank find the point of max intensity
     for (j in 1:length(labelList)){
-      if (labelList[j] != "" ){
+      if (match(labelList[j], labelsOfInterest, nomatch = 0)){
         times <- timePointsOfInterval(file = textGridList[i], 
                                       numberOfInterval = j, 
-                                      tier = 2) 
+                                      tier = 1) 
         newVal <- intensityMaximumTime(file = intensityList[i], 
-                                                    times[1], times[2])  
+                                       times[1], times[2])  
         timeMaxInt <- c(timeMaxInt, newVal)
       }
     }
@@ -154,33 +172,35 @@ if ((findIntensity + findPitch + findF1 + findF2) > 0){
   # add our measurements to the table and save the file
   measurementTable <- cbind(measurementTable, timeMaxInt, 
                             stringsAsFactors = FALSE, deparse.level = 1)
-  write.csv(measurementTable, "measurementTable.csv")
+  write.csv(measurementTable, "measurementTableIntTime.csv")
 }
 
 ## Find max intensity 
 #
 # now find the max intensity (if needed) and add it to our table 
-if (findIntensity = TRUE){
+if (findIntensity == TRUE){
+  # create a place to store our points of max intensity 
+  Intensity <- NULL
   for (i in 1:length(textGridList)){
-    # create a place to store our points of max intensity 
-    Intensity <- NULL
     # list all the interval labels (including blanks) in the text grid
-    labelList <- labelOfIntervals(textGridList[i],numInt[i], tier = 2 )
+    labelList <- labelOfIntervals(textGridList[i],numInt[i], tier = 1 )
     # look through each label and if it's not blank find the point of max intensity
     for (j in 1:length(labelList)){
-      if (labelList[j] != "" ){
+      if (match(labelList[j], labelsOfInterest, nomatch = 0)){
         times <- timePointsOfInterval(file = textGridList[i], 
                                       numberOfInterval = j, 
-                                      tier = 2) 
-        newVal <- times <- intensityMaximum(file = intensityList[i], times[1], times[2])
+                                      tier = 1) 
+        newVal <- intensityMaximum(file = intensityList[i], 
+                                   timeLow = times[1], 
+                                   timeHigh = times[2])
         Intensity <- c(Intensity, newVal)
       }
     }
   }
   # add our intensity measurements to the table and save the file
   measurementTable <- cbind(measurementTable, Intensity, 
-                          stringsAsFactors = FALSE, deparse.level = 1)
-  write.csv(measurementTable, "measurementTable.csv")
+                            stringsAsFactors = FALSE, deparse.level = 1)
+  write.csv(measurementTable, "measurementTableInt.csv")
 }
 
 ## Find max pitch 
@@ -210,7 +230,7 @@ if (findPitch == TRUE){
   measurementTable <- cbind(measurementTable, Pitch, 
                             stringsAsFactors = FALSE, deparse.level = 1)
   # and save it out
-  write.csv(measurementTable, "measurementTable.csv")
+  write.csv(measurementTable, "measurementTablePitch.csv")
 }
 
 # Create formant objects
@@ -218,7 +238,7 @@ if (findPitch == TRUE){
 # create formant objects if we need them. This particular function takes a
 # really long time
 if (findF1 + findF2 > 0){
-  for (i in 1:length(wavList){
+  for (i in 1:length(wavList)){
     toFormant(file = wavList[i])
   }
 }
@@ -233,15 +253,15 @@ if (findF1 == TRUE){
     fileName <- paste(gsub(".TextGrid", '' , measurementTable$File[i]), 
                       ".formant", sep = "")
     newVal <- formantAtTime(file = fileName,
-                        formantNumber = 1,
-                        time = measurementTable$Time_Max_Intensity[i])
+                            formantNumber = 1,
+                            time = measurementTable$timeMaxInt[i])
     F1 <- c(F1, newVal)
   }
   # now we can bind that list of values as a column to our table
   measurementTable <- cbind(measurementTable, F1, 
                             stringsAsFactors = FALSE, deparse.level = 1)
   # and save it out
-  write.csv(measurementTable, "measurementTable.csv")
+  write.csv(measurementTable, "measurementTableF1.csv")
 }
 
 ## Find F2
@@ -254,12 +274,12 @@ if (findF2 == TRUE){
                       ".formant", sep = "")
     newVal <- formantAtTime(file = fileName,
                             formantNumber = 2,
-                            time = measurementTable$Time_Max_Intensity[i])
+                            time = measurementTable$timeMaxInt[i])
     F2 <- c(F2, newVal)
   }
   # now we can bind that list of values as a column to our table
   measurementTable <- cbind(measurementTable, F2, 
                             stringsAsFactors = FALSE, deparse.level = 1)
   # and save it out
-  write.csv(measurementTable, "measurementTable.csv")
+  write.csv(measurementTable, "measurementTableF2.csv")
 }
